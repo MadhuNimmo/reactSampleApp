@@ -21,6 +21,9 @@
         "fetch-no-catch": [
             "error"
         ],
+        "fetch-no-progress": [
+            "error"
+        ],
         "dont-call-x": [
             "error"
         ]

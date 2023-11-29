@@ -1,12 +1,9 @@
 interface Props {
-  children: String;
   onClick: () => void;
 }
-function Button({ children, onClick }: Props) {
+function Button({ onClick }: Props) {
   return (
-    <button className="btn btn-primary" onClick={onClick}>
-      {children}
-    </button>
+    <button className="btn btn-primary" onClick={onClick}></button>
   );
 }
 

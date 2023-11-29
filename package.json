@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "npx eslint src/X.js src/Y.js --fix --rulesdir /Users/madhurimachakraborty/Documents/reactSampleApp/src/rules/"
+    "lint": "npx eslint src/Sample.tsx --fix --rulesdir /Users/madhurimachakraborty/Documents/reactSampleApp/src/rules/"
   },
   "dependencies": {
     "bootstrap": "^5.2.3",

@@ -29,6 +29,20 @@ module.exports = {
           });
         }
       },
+      TryStatement(node) {
+        // Check if there is a 'fetch' call inside the 'try' block
+        const fetchCall = findFetchCall(node);
+        if (fetchCall) {
+          // Check if there is an associated 'catch' block
+          const hasCatchBlock = node.handler !== null;
+          if (!hasCatchBlock) {
+            context.report({
+              node,
+              message: 'Use of fetch inside a try block without an associated catch block.',
+            });
+          }
+        }
+      },
     };
   },
 };
@@ -41,9 +55,25 @@ function hasCatchBlock(context, node) {
       (ancestor.type === 'CallExpression' && ancestor.callee.name === 'catch') ||
       ancestor.type === 'TryStatement'
     ) {
-      console.log(ancestor)
       return true;
     }
   }
   return false;
+}
+
+function findFetchCall(node) {
+  if (node.type === 'CallExpression' && node.callee.name === 'fetch') {
+    return node;
+  }
+
+  for (const key in node) {
+    if (node[key] && typeof node[key] === 'object') {
+      const result = findFetchCall(node[key]);
+      if (result) {
+        return result;
+      }
+    }
+  }
+
+  return null;
 }
