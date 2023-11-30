@@ -1,71 +1,50 @@
 /**
- * @fileoverview ESLint rule to check if a React component with fetch includes Progress.Bar in JSX
+ * @fileoverview Custom ESLint rule to check for PropertyAccessExpression in JSX elements
+ * only when the component has a call to fetch and Progress is used.
  */
-
-//------------------------------------------------------------------------------
-// Rule Definition
-//------------------------------------------------------------------------------
 
 module.exports = {
         meta: {
-                type: 'suggestion',
                 docs: {
-                        description: 'Ensure a React component with fetch includes Progress.Bar in JSX',
+                        description: 'Check for PropertyAccessExpression in JSX elements only when the component has a call to fetch and Progress is used.',
                         category: 'Best Practices',
                         recommended: true,
                 },
-                fixable: null,
-                schema: [],
+                fixable: null, // or 'code' or 'whitespace'
         },
 
         create: function (context) {
-                let hasFetchCall = false;
-                let includesProgressBar = false;
+                let hasFetch = false;
+                let jsxElementsWithProgress = [];
+
+                function checkForPropertyAccess(node) {
+                        if (node.type === 'JSXElement') {
+                                if (["ActivityIndicator", "ProgressBarAndroid", "ProgressViewIOS"].includes(node.openingElement.name.name) || (node.openingElement.name.type == 'JSXMemberExpression' && node.openingElement.name.object.name == 'Progress')) {
+                                        jsxElementsWithProgress.push(node);
+                                }
+                                node.children.forEach(childNode => {
+                                        checkForPropertyAccess(childNode);
+                                });
+                        }
+                }
 
                 return {
-                        CallExpression(node) {
-                                const isFetch = node.callee.type === 'Identifier' && node.callee.name === 'fetch';
-                                if (isFetch) {
-                                        hasFetchCall = true;
+                        CallExpression: function (node) {
+                                if (node.callee.name === 'fetch') {
+                                        hasFetch = true;
                                 }
                         },
-
-                        JSXElement(node) {
-                                if (hasFetchCall) {
-                                        //const isProgressBar = node.openingElement.name.name === 'Progress' && node.openingElement.name.property.name === 'Bar';
-                                        if (node.children.some(child => includesProgressBarFun(child))) {
-                                                includesProgressBar = true; // Reset after finding Progress.Bar
-                                        }
-                                }
+                        JSXElement: function (node) {
+                                checkForPropertyAccess(node);
                         },
-
-                        'Program:exit': function () {
-                                if (hasFetchCall && !includesProgressBar) {
+                        'Program:exit': function (programNode) {
+                                if (hasFetch && jsxElementsWithProgress.length === 0) {
                                         context.report({
-                                                node: context.getSourceCode().ast,
-                                                message: 'Component with fetch should include Progress.Bar in JSX.',
+                                                node: programNode,
+                                                message: 'Avoid calling fetch without using Progress in the JSX elements.',
                                         });
                                 }
                         },
                 };
         },
 };
-
-function includesProgressBarFun(node) {
-        if (node.type === 'JSXElement') {
-                const openingElementName = node.openingElement.name;
-                const isProgressBar =
-                        (openingElementName &&
-                                ((openingElementName.type === 'JSXIdentifier' &&
-                                        openingElementName.name === 'Progress') ||
-                                        (openingElementName.type === 'JSXMemberExpression' &&
-                                                openingElementName.object.name === 'Progress')));
-                if (isProgressBar) {
-                        return true;
-                }
-
-                return node.children.some(child => includesProgressBarFun(child));
-        }
-
-        return false;
-}
